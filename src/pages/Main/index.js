@@ -7,19 +7,22 @@ import CompareList from "../../Components/CompareList";
 
 class Main extends Component {
   state = {
+    isLoading: false,
     repositoryInput: "",
     repositories: [],
     repositoryError: false
   };
 
   handleSubmit = e => {
+    e.preventDefault();
+    this.setState({ isLoading: true });
+
     function handleErrors(response) {
       if (!response.ok) {
         throw Error(response.statusText);
       }
       return response;
     }
-    e.preventDefault();
     fetch(`https://api.github.com/repos/${this.state.repositoryInput}`)
       .then(handleErrors)
       .then(res => res.json())
@@ -34,6 +37,11 @@ class Main extends Component {
       .catch(error => {
         this.setState({
           repositoryError: true
+        });
+      })
+      .finally(() => {
+        this.setState({
+          isLoading: false
         });
       });
   };
@@ -53,7 +61,13 @@ class Main extends Component {
             value={this.state.repositoryInput}
             onChange={e => this.setState({ repositoryInput: e.target.value })}
           />
-          <button type="submit">+</button>
+          <button type="submit">
+            {this.state.isLoading ? (
+              <i className="fa fa-spinner fa-pulse" />
+            ) : (
+              "+"
+            )}
+          </button>
         </Form>
 
         <CompareList
