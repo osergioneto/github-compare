@@ -8,24 +8,34 @@ import CompareList from "../../Components/CompareList";
 class Main extends Component {
   state = {
     repositoryInput: "",
-    repositories: []
+    repositories: [],
+    repositoryError: false
   };
 
   handleSubmit = e => {
-    e.preventDefault();
-    try {
-      fetch(`https://api.github.com/repos/${this.state.repositoryInput}`)
-        .then(res => res.json())
-        .then(result => {
-          result.lastCommit = moment(result.pushed_at).fromNow();
-          this.setState({
-            repositoryInput: "",
-            repositories: [...this.state.repositories, result]
-          });
-        });
-    } catch (error) {
-      console.log(error);
+    function handleErrors(response) {
+      if (!response.ok) {
+        throw Error(response.statusText);
+      }
+      return response;
     }
+    e.preventDefault();
+    fetch(`https://api.github.com/repos/${this.state.repositoryInput}`)
+      .then(handleErrors)
+      .then(res => res.json())
+      .then(result => {
+        result.lastCommit = moment(result.pushed_at).fromNow();
+        this.setState({
+          repositoryInput: "",
+          repositories: [...this.state.repositories, result],
+          repositoryError: false
+        });
+      })
+      .catch(error => {
+        this.setState({
+          repositoryError: true
+        });
+      });
   };
 
   render() {
@@ -33,7 +43,10 @@ class Main extends Component {
       <Container>
         <img src={logo} alt="" />
 
-        <Form onSubmit={this.handleSubmit}>
+        <Form
+          withError={this.state.repositoryError}
+          onSubmit={this.handleSubmit}
+        >
           <input
             type="text"
             placeholder="usuario/nome-do-repositório"
